@@ -1,25 +1,28 @@
-// myclass.h
 #ifndef DISPLAY_H
 #define DISPLAY_H
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <cmath>
 #include <vector>
+
 using namespace std;
 
 class Display {
 public:
-    Display(const vector<float>& data){
+    Display(const vector<float> &data, int antialiase = 0) {
         this->data = data;
+        this->antialise = antialiase;
     }
-    void draw(){
+
+    void draw() {
         glfwInit();
 
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        glfwWindowHint(GLFW_RESIZABLE,GL_TRUE);
+        glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 
         GLFWwindow *window = glfwCreateWindow(800, 800, "DDA", NULL, NULL);
 
@@ -37,7 +40,7 @@ public:
         glfwSetFramebufferSizeCallback(window, Display::framebuffer_size_callback);
 
 
-        if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
             cout << "Failed to initialize GLAD" << endl;
             exit(EXIT_FAILURE);
         }
@@ -57,7 +60,7 @@ public:
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
 
-        while(!glfwWindowShouldClose(window)){
+        while (!glfwWindowShouldClose(window)) {
 
 
             glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
@@ -76,12 +79,21 @@ public:
 
 private:
     vector<float> data;
-    const char *vertexShaderSource = "#version 330 core\n"
-                                     "layout (location = 0) in vec2 aPos;\n"
-                                     "void main()\n"
-                                     "{\n"
-                                     "   gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);\n"
-                                     "}\0";
+    int antialise;
+    const char *vertexShaderSource = this->antialise ? "#version 330 core\n"
+                                                       "layout (location = 0) in vec2 aPos;\n"
+                                                       "layout (location = 1) in vec2 aAlpha;\n"
+                                                       "out float alpha;\n"
+                                                       "void main()\n"
+                                                       "{\n"
+                                                       "   gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);\n"
+                                                       "   alpha = aAlpha.x;\n"
+                                                       "}\0" : "#version 330 core\n"
+                                                               "layout (location = 0) in vec2 aPos;\n"
+                                                               "void main()\n"
+                                                               "{\n"
+                                                               "   gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);\n"
+                                                               "}\0";
 
     const char *fragmentShaderSource = "#version 330 core\n"
                                        "out vec4 FragColor;\n"
@@ -91,7 +103,8 @@ private:
                                        "}\n\0";
 
     GLuint shaderProgram;
-    void drawLine (){
+
+    void drawLine() {
         GLuint VAO, VBO;
         glGenVertexArrays(1, &VAO);
         glGenBuffers(1, &VBO);
@@ -99,26 +112,27 @@ private:
         glBindVertexArray(VAO);
 
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER,this->data.size() * sizeof(float), this->data.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, this->data.size() * sizeof(float), this->data.data(), GL_STATIC_DRAW);
 
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, (this->antialise ? 4 : 2) * sizeof(float), (void *) 0);
         glEnableVertexAttribArray(0);
+
+        if (this->antialise) {
+            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) (2 * sizeof(float)));
+            glEnableVertexAttribArray(1);
+        }
 
         glUseProgram(shaderProgram);
         glBindVertexArray(VAO);
 
-        glDrawArrays(GL_LINE_STRIP, 0, this->data.size()/2);
+        glDrawArrays(GL_LINE_STRIP, 0, this->data.size() / (this->antialise ? 4 : 2));
 
         glDeleteVertexArrays(1, &VAO);
         glDeleteBuffers(1, &VBO);
     }
+
     void drawAxes() {
-        float axes[] = {
-                -1.0f, 0.0f,
-                1.0f, 0.0f,
-                0.0f, -1.0f,
-                0.0f,  1.0f
-        };
+        float axes[] = {-1.0f, 0.0f, 1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f};
 
         GLuint VAO, VBO;
         glGenVertexArrays(1, &VAO);
@@ -129,7 +143,7 @@ private:
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(axes), axes, GL_STATIC_DRAW);
 
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *) 0);
         glEnableVertexAttribArray(0);
 
         glUseProgram(shaderProgram);
@@ -140,6 +154,7 @@ private:
         glDeleteVertexArrays(1, &VAO);
         glDeleteBuffers(1, &VBO);
     }
+
     static void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
         glViewport(0, 0, width, height);
     }

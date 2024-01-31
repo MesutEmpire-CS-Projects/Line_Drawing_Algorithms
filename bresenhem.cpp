@@ -5,32 +5,49 @@
 
 using namespace std;
 
-
-float x_1, x_2, y_1, y_2, m, p_k;
-float dx, dy;
-int current_steps=0;
+float x_1, x_2, y_1, y_2, dx, dy, p_k,x,y;
 vector<float> coordinates;
 
-void bresenhem_algorithm() {
-    p_k = 2 * dy - dx;
+void bresenham_algorithm() {
+    float scaling_factor_x = max(x_1, x_2) + 5;
+    float scaling_factor_y = max(y_1, y_2) + 5;
+    int step,incx, incy;
+    dx = abs(dx);
+    dy = abs(dy);
+    incx = 1;
+    if (x_2 < x_1) incx = -1;
+    incy = 1;
+    if (y_2 < y_1) incy = -1;
 
-    while (x_1 <= x_2 && y_1 <= y_2) {
-        coordinates.resize(2 * current_steps+2);
-        coordinates[2 * current_steps] = round(x_1)/15;
-        coordinates[2 * current_steps + 1] = round(y_1)/25;
-
-        if (p_k < 0) {
-            p_k += 2 * dy;
-            x_1 = x_1 + 1;
-        } else if (p_k >= 0) {
-            p_k += (2 * dy - 2 * dx);
-            x_1 = x_1 + 1;
-            y_1 = y_1 + 1;
-        }
-        current_steps += 1;
+    if (dx > dy) {
+        step = dx;
+    } else {
+        step = dy;
     }
 
-    for (float i: coordinates) {
+    x = x_1;
+    y = y_1;
+
+    coordinates.push_back(round(x)/scaling_factor_x);
+    coordinates.push_back(round(y)/scaling_factor_y);
+
+    p_k = 2 * dy - dx;
+
+    for (int i = 0; i < step; i++) {
+        if (p_k < 0) {
+            x += incx;
+            p_k += 2 * dy;
+        } else {
+            x += incx;
+            y += incy;
+            p_k += 2 * (dy - dx);
+        }
+
+        coordinates.push_back(round(x)/scaling_factor_x);
+        coordinates.push_back(round(y)/scaling_factor_y);
+    }
+
+    for (float i : coordinates) {
         cout << "element: " << i << endl;
     }
 }
@@ -44,15 +61,19 @@ void input() {
     cin >> x_2;
     printf("Enter value of Y2 :");
     cin >> y_2;
+
     dx = x_2 - x_1;
     dy = y_2 - y_1;
-    m = dy / dx;
-    bresenhem_algorithm();
-}
 
+    p_k = 2 * abs(dy) - abs(dx);
+
+    bresenham_algorithm();
+}
 
 int main() {
     input();
     Display display_board = Display(coordinates);
     display_board.draw();
+    return 0;
 }
+

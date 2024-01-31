@@ -7,18 +7,26 @@ using namespace std;
 
 
 float x_1, x_2, y_1, y_2, m, d_initial;
-float dx, dy,dd;
+float dx, dy,dd,d;
 int current_steps=0;
 vector<float> coordinates;
 
 void midpoint_line_drawing_algorithm() {
+    cout << "Dy : " << dy << " Dx : "<< dx <<endl;
     d_initial = 2*dy - dx;
     dd = 2*(dy-dx);
+    cout << "D intial : " << d_initial <<endl;
+    cout << "dd : " << dd <<endl;
 
-    while (x_1 <= x_2 && y_1 <= y_2) {
+    float scaling_factor_x = max(x_1, x_2) + 5;  // Adjust as needed
+    float scaling_factor_y = max(y_1, y_2) + 5;  // Adjust as needed
+
+
+    while (x_1<=x_2&&y_1 <=y_2) {
         coordinates.resize(2 * current_steps+2);
-        coordinates[2 * current_steps] = round(x_1)/35;
-        coordinates[2 * current_steps + 1] = round(y_1)/20;
+        coordinates[2 * current_steps] = round(x_1);
+        coordinates[2 * current_steps + 1] = round(y_1);
+        cout << "X : " << x_1 << " Y : " << y_1 << endl;
 
         if (d_initial < 0) {
             d_initial += 2 * dy;
@@ -30,11 +38,12 @@ void midpoint_line_drawing_algorithm() {
         }
         current_steps += 1;
     }
-
+    cout << "Coordinates" << endl;
     for (float i: coordinates) {
         cout << "element: " << i << endl;
     }
 }
+
 
 void input() {
     printf("Enter value of X1 :");
@@ -54,6 +63,4 @@ void input() {
 
 int main() {
     input();
-    Display display_board = Display(coordinates);
-    display_board.draw();
 }
